@@ -4,18 +4,21 @@ from difflib import SequenceMatcher
 import os
 
 # Your Shodan API Key
-SHODAN_API_KEY = "your_shodan_api_key"
+SHODAN_API_KEY = "SHODAN_API"
 
 # Function to display ASCII art banner
 def display_banner():
     print("""
-
-██████   ██████  ██████  ███████ ██████  ████████  ██████  
-██   ██ ██    ██ ██   ██ ██      ██   ██    ██    ██    ██ 
-██████  ██    ██ ██████  █████   ██████     ██    ██    ██ 
-██   ██ ██    ██ ██   ██ ██      ██   ██    ██    ██    ██ 
-██   ██  ██████  ██████  ███████ ██   ██    ██     ██████  
-                                                                                                                                                                                              
+ /$$$$$$$            /$$                             /$$              
+| $$__  $$          | $$                            | $$              
+| $$  \ $$  /$$$$$$ | $$$$$$$   /$$$$$$   /$$$$$$  /$$$$$$    /$$$$$$ 
+| $$$$$$$/ /$$__  $$| $$__  $$ /$$__  $$ /$$__  $$|_  $$_/   /$$__  $$
+| $$__  $$| $$  \ $$| $$  \ $$| $$$$$$$$| $$  \__/  | $$    | $$  \ $$
+| $$  \ $$| $$  | $$| $$  | $$| $$_____/| $$        | $$ /$$| $$  | $$
+| $$  | $$|  $$$$$$/| $$$$$$$/|  $$$$$$$| $$        |  $$$$/|  $$$$$$/
+|__/  |__/ \______/ |_______/  \_______/|__/         \___/   \______/ 
+                                                                      
+                                                                      
     """)
 
 # Initialize Shodan API
@@ -41,6 +44,8 @@ def get_whois_org(domain):
 
 # Function to calculate similarity between two strings
 def is_similar(name1, name2, threshold=0.6):
+    if not name1 or not name2:  # Ensure neither value is None
+        return False
     return SequenceMatcher(None, name1.lower(), name2.lower()).ratio() > threshold
 
 # Function to query Shodan and filter close-matching organizations
@@ -80,6 +85,9 @@ def main():
     with open(file_name, "r") as file:
         root_domains = [line.strip() for line in file if line.strip()]
     
+    # Prompt for the output file name
+    output_file_name = input("Enter the output file name to save results (e.g., results.txt): ").strip()
+    
     # Process each domain
     output_data = {}
     for domain in root_domains:
@@ -94,8 +102,7 @@ def main():
         output_data[domain] = shodan_orgs
         print(f"Shodan organizations for {domain}: {', '.join(shodan_orgs) if shodan_orgs else 'None'}")
     
-    # Save results to a file
-    output_file_name = "shodan_org_results.txt"
+    # Save results to the specified output file
     with open(output_file_name, "w") as output_file:
         for domain, orgs in output_data.items():
             output_file.write(f"{domain}:\n")
