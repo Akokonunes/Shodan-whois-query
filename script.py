@@ -55,7 +55,7 @@ def get_shodan_orgs(domain, whois_org):
         # Query Shodan
         results = api.search(query)
         orgs = set()
-        for result in results['matches']:
+        for result in results.get('matches', []):
             if 'org' in result:
                 orgs.add(result['org'])
         
@@ -67,12 +67,19 @@ def get_shodan_orgs(domain, whois_org):
             elif whois_org and is_similar(org, whois_org):  # Check if Shodan org matches WHOIS org
                 filtered_orgs.append(org)
         
-        return filtered_orgs or list(orgs)  # Return filtered or all if no match
+        return [org for org in filtered_orgs if org is not None]  # Ensure no None values
     except shodan.APIError as e:
         print(f"Error querying Shodan for {domain}: {e}")
-        if "403" in str(e):
-            print("Access denied: Verify your API key or check API usage limits.")
         return []
+
+# Function to save results incrementally
+def save_results(output_file_name, output_data):
+    with open(output_file_name, "w") as output_file:
+        for domain, orgs in output_data.items():
+            output_file.write(f"{domain}:\n")
+            for org in orgs:
+                output_file.write(f"  - {org}\n")
+    print(f"Results saved to {output_file_name}")
 
 # Main function
 def main():
@@ -101,14 +108,9 @@ def main():
         shodan_orgs = get_shodan_orgs(domain, whois_org)
         output_data[domain] = shodan_orgs
         print(f"Shodan organizations for {domain}: {', '.join(shodan_orgs) if shodan_orgs else 'None'}")
-    
-    # Save results to the specified output file
-    with open(output_file_name, "w") as output_file:
-        for domain, orgs in output_data.items():
-            output_file.write(f"{domain}:\n")
-            for org in orgs:
-                output_file.write(f"  - {org}\n")
-    print(f"\nResults saved to {output_file_name}")
+        
+        # Save results incrementally after each domain
+        save_results(output_file_name, output_data)
 
 # Run the script
 if __name__ == "__main__":
